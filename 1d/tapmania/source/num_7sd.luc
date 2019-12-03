@@ -1,0 +1,31 @@
+module num_7sd #(
+    DIGITS = 2 : DIGITS > 0,  // number of digits on the 7-segment display
+    LEADING_ZEROS = 1 : LEADING_ZEROS == 0 || LEADING_ZEROS == 1
+  )(
+    input num[$clog2($pow(10, DIGITS)-1)],  // number to display on 7sd
+    input seg_ctr[$clog2(DIGITS)],          // which seg to select (in binary)
+    
+    output seg[8],                          // seg bits
+    output sel[DIGITS]                      // seg select (in one-hot)
+  ){
+  
+  // decoder to convert seg count to one-hot encoding  
+  decoder num_to_seg(#WIDTH($clog2(DIGITS)));
+  
+  // converters from binary to decimal to char to segment bits
+  bin_to_dec bin_to_dec(#DIGITS(DIGITS), #LEADING_ZEROS(LEADING_ZEROS));
+  dec_to_char dec_to_char;
+  char_to_seg char_to_seg;
+  
+  always {
+    num_to_seg.in = seg_ctr;  // decode the seg count
+    sel = ~num_to_seg.out;    // select which seg to activate
+    
+    // convert num to dec to char to seg
+    bin_to_dec.value = num;
+    dec_to_char.dec = bin_to_dec.digits[seg_ctr];
+    char_to_seg.char = dec_to_char.char;
+    
+    seg = ~char_to_seg.seg;   // connect seg bits to seg output
+  }
+}

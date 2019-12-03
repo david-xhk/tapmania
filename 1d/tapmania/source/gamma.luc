@@ -1,0 +1,79 @@
+module gamma (
+    input clk,  // clock
+    input rst,  // reset
+    
+    input button[6],  // button inputs
+    output led1[32],  // LED array
+    output led2[2]    // Backlight
+  ){
+  
+  .clk(clk), .rst(rst) {
+    program_ctr pc;
+    regfile regs;
+    io_unit io;
+    dff hsec_ctr[19];
+  }
+ 
+  inst_rom inst;
+  alu alu;
+  control_unit cu;
+  data_rom mem;
+  
+  always {
+    if (hsec_ctr.q == 500000) {
+      io.hsec_in = 1;
+      hsec_ctr.d = 0;
+    }
+    else {
+      io.hsec_in = 0;
+      hsec_ctr.d = hsec_ctr.q + 1;
+    }
+    
+    io.button = button;
+    led1 = io.led1;
+    led2 = io.led2;
+    
+    // for debugging pc
+    // led1[31] = pc.out[7];
+    // led1[27] = pc.out[6];
+    // led1[23] = pc.out[5];
+    // led1[19] = pc.out[4];
+    // led1[15] = pc.out[3];
+    // led1[11] = pc.out[2];
+    // led1[7] = pc.out[1];
+    // led1[3] = pc.out[0];
+    
+    // for debugging next reg
+    // led1[31:28] = regs.r4;       
+    
+    inst.a = pc.out;
+    pc.addr = inst.d[19-:8];
+    regs.wa = inst.d[25-:3];
+    regs.ra1 = inst.d[22-:3];
+    regs.ra2 = inst.d[19-:3];
+    cu.opcode = inst.d[31-:6];
+    io.a = inst.d[19-:4];
+    
+    cu.z = ~|regs.rd1;
+    pc.pcsel = cu.pcsel;
+    regs.we = cu.werf;
+    alu.alufn = cu.alufn;
+    io.wr = cu.wr;
+    
+    alu.a = regs.rd1;
+    if (cu.bsel)
+      alu.b = c{16x{inst.d[15]}, inst.d[15:0]};
+    else
+      alu.b = regs.rd2;
+   
+    mem.a = alu.out[7:0];
+    io.wd = alu.out;
+    
+    case (cu.wdsel) {
+      2: regs.wd = mem.d;
+      1: regs.wd = io.rd;
+      0: regs.wd = alu.out;
+      default: regs.wd = 32bx;
+    }
+  }
+}

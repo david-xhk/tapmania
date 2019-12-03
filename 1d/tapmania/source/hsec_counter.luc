@@ -1,0 +1,80 @@
+module hsec_counter #(
+    MINS = 99 : MINS > 0  // max number of minutes
+  )(
+    input clk,    // clock
+    input rst,    // reset
+    input reset,  // reset counter
+    input tick,   // hsec tick
+    
+    output hsecs[7],                              // hundredth seconds (hsecs < 100)
+    output total_hsecs[$clog2(6000*(MINS+1)-1)],  // total hundredth seconds
+    output secs[6],                               // seconds (secs < 60)
+    output total_secs[$clog2(60*(MINS+1)-1)],     // total seconds
+    output mins[$clog2(MINS)]                     // minutes (mins <= MINS)
+  ){
+  
+  .clk(clk), .rst(rst) {
+    // dffs to store the time
+    dff hsecs_dff[7](#INIT(0));
+    dff total_hsecs_dff[$clog2(6000*(MINS+1)-1)](#INIT(0));
+    dff secs_dff[6](#INIT(0));
+    dff total_secs_dff[$clog2(60*(MINS+1)-1)](#INIT(0));
+    dff mins_dff[$clog2(MINS)](#INIT(0));
+  }
+  
+  always {
+    hsecs = hsecs_dff.q;  // connect dff values to output
+    total_hsecs = total_hsecs_dff.q;
+    secs = secs_dff.q;
+    total_secs = total_secs_dff.q;
+    mins = mins_dff.q;
+
+    if (rst || reset) {
+      hsecs_dff.d = 0;  // set all values to 0
+      total_hsecs_dff.d = 0;
+      secs_dff.d = 0;
+      total_secs_dff.d = 0;
+      mins_dff.d = 0;
+      
+      hsecs = 0;  // output 0 for all values
+      total_hsecs = 0;
+      secs = 0;
+      total_secs = 0;
+      mins = 0;
+    }
+    
+    else if (tick) {
+      secs_dff.d = secs_dff.q;
+      total_secs_dff.d = total_secs_dff.q;
+      mins_dff.d = mins_dff.q;
+
+      total_hsecs_dff.d = total_hsecs_dff.q + 1;  // increment total hsecs
+      
+      if (hsecs_dff.q < 99)                       // if 100hs not reached
+        hsecs_dff.d = hsecs_dff.q + 1;            // increment hsecs
+      
+      else {                                      // otherwise 1s elapsed
+        hsecs_dff.d = 0;                          // reset hsecs
+        total_secs_dff.d = total_secs_dff.q + 1;  // increment total secs
+        
+        if (secs_dff.q < 59)                      // if 59s not reached
+          secs_dff.d = secs_dff.q + 1;            // increment secs
+        
+        else {                                    // otherwise 1min elapsed
+          secs_dff.d = 0;                         // reset secs
+        
+          if (mins_dff.q < MINS)                  // if max mins not reached
+            mins_dff.d = mins_dff.q + 1;          // increment mins
+        }
+      }
+    }
+    
+    else {
+      hsecs_dff.d = hsecs_dff.q;    // store back all prev values
+      total_hsecs_dff.d = total_hsecs_dff.q;
+      secs_dff.d = secs_dff.q;
+      total_secs_dff.d = total_secs_dff.q;
+      mins_dff.d = mins_dff.q;
+    }
+  }
+}

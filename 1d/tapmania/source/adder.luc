@@ -1,0 +1,28 @@
+module adder (
+    signed input a[32],    // signed operand a
+    signed input b[32],    // signed operand b
+    input alufn[6],          // alufn
+
+    output z,                // zero condition of output
+    output v,                // overflow condition of output
+    output n,                // MSB of output
+    signed output out[32]  // signed adder output
+  ){
+  
+  sig s[32];  // signal to allow read/write on sum
+  sig xb;       // signal to allow read/write on MSB of b
+
+  always {
+    case (alufn[1:0]) {
+      b00: s = a + b;         // if ALUFN[1:0] == 00, do ADD
+      b01: s = a - b;         // if ALUFN[1:0] == 01, do SUB
+      default: s = 0;         // set default s to 0
+    }
+    
+    out = s;                                       // connect s to output
+    xb = alufn[0] ^ b[31];                        // find MSB of 2's complement of b
+    z = ~|s;                                       // check for zero condition
+    v = (a[31]&xb&~s[31])|(~a[31]&~xb&s[31]);  // check overflow condition
+    n = s[31];                                    // connect n to MSB of s
+  } 
+}

@@ -1,0 +1,61 @@
+module timer #(
+    MINS = 99 : MINS > 0  // max number of minutes
+  )(
+    input clk,    // clock
+    input rst,    // reset
+    input we,     // timer state reg write enable 
+    input wd[2],  // timer state reg write data (state = 0, 1, or 2)
+    
+    output hsecs[7],                              // hundredth seconds (hsecs < 100)
+    output total_hsecs[$clog2(6000*(MINS+1)-1)],  // total hundredth seconds
+    output secs[6],                               // seconds (secs < 60)
+    output total_secs[$clog2(60*(MINS+1)-1)],     // total seconds
+    output mins[$clog2(MINS)]                     // minutes (mins <= MINS)
+  ){
+  
+  .clk(clk), .rst(rst) {
+    // dff to store the clks
+    dff clks_dff[19](#INIT(0));
+    
+    // hsec counter util to count hsecs
+    hsec_counter hsec_ctr(#MINS(MINS));
+    
+    // register to store the state of the timer
+    register state_reg(#BITS(2));
+  }
+  
+  always {
+    hsecs = hsec_ctr.hsecs;  // pipe hsec ctr to output
+    total_hsecs = hsec_ctr.total_hsecs;
+    secs = hsec_ctr.secs;
+    total_secs = hsec_ctr.total_secs;
+    mins = hsec_ctr.mins;
+    
+    state_reg.we = we;  // connect write enable input to state reg
+    state_reg.d = wd;   // connect write data input to state reg
+    
+    hsec_ctr.reset = 0;  // set default hsec ctr reset to 0
+    hsec_ctr.tick = 0;   // set default hsec ctr tick to 0
+    
+    case (state_reg.q) {
+      // OFF state
+      0:
+        clks_dff.d = 0;      // reset clks
+        hsec_ctr.reset = 1;  // reset hsec ctr
+      
+      // ON state
+      1:
+        if (clks_dff.q < 499999)
+          clks_dff.d = clks_dff.q + 1;  // increment clks
+        
+        else {                // 500000 CLKS reached, 1hs elapsed
+          clks_dff.d = 0;     // reset clks
+          hsec_ctr.tick = 1;  // tick hsec ctr
+        }
+    
+      // PAUSE state
+      2:
+        clks_dff.d = clks_dff.q;  // store back prev clks
+    }
+  }
+}

@@ -1,0 +1,61 @@
+module stage_7sd #(
+    DIGITS = 2 : DIGITS > 0,            // number of digits on 7-segment display
+    MAX = 20 : MAX < $pow(10, DIGITS)   // max stage to display (stage <= MAX)
+  )(
+    input clk,           // clock
+    input rst,           // reset
+    
+    input state_we,      // 7sd state write enable
+    input state_wd,      // 7sd state write data (state = 0 or state = 1)
+    output state_rd,     // 7sd state read data
+    
+    input stage_we,                // stage reg write enable
+    input stage_wd[$clog2(MAX)],   // stage reg write data
+    output stage_rd[$clog2(MAX)],  // stage reg read data
+    
+    output sel[DIGITS],  // seg select
+    output seg[8]        // seg bits
+  ){
+  
+  .clk(clk), .rst(rst) {
+    // register to store the state
+    register state_reg(#BITS(1), #INIT(0));
+    
+    // register to store the stage
+    register stage_reg(#BITS($clog2(MAX+1)), #INIT(1));
+    
+    // counter to select which segment to activate
+    // increases every 2^16 = 65536 CLK cycles
+    counter seg_ctr(#DIV(16), #SIZE($clog2(DIGITS)), #TOP(DIGITS-1));
+  }
+  
+  // num_7sd util to display numbers on 7sd
+  num_7sd num_7sd(#DIGITS(DIGITS), #LEADING_ZEROS(1));
+  
+  always {
+    state_rd = state_reg.q;           // connect state read/write data and write enable inputs
+    state_reg.we = state_we;
+    state_reg.d = state_wd;
+    
+    stage_rd = stage_reg.q;           // connect stage read data and write enable inputs
+    stage_reg.we = stage_we;
+
+    if (stage_wd <= MAX)              // if wd does not exceed MAX
+      stage_reg.d = stage_wd;         // connect write data input to stage reg
+    else
+      stage_reg.d = MAX;              // otherwise write MAX to stage reg
+    
+    num_7sd.seg_ctr = seg_ctr.value;  // connect seg ctr to 7sd seg ctr
+    num_7sd.num = stage_reg.q;        // connect stage to 7sd num
+
+    if (state_reg.q) {                // if state is ON
+      sel = num_7sd.sel;              // connect 7sd sel to sel output
+      seg = num_7sd.seg;              // connect 7sd seg bits to seg output
+    }
+    
+    else {                            // if state is OFF
+      sel = 4hf;                      // select no digits
+      seg = 8hff;                     // turn segments off
+    }
+  }
+}

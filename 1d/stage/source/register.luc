@@ -1,0 +1,29 @@
+module register #(
+    INIT = 0 : INIT >= 0,  // reg init value
+    BITS = 32 : BITS > 0   // number of bits stored
+  )(
+    input clk,      // clock
+    input rst,      // reset
+    input we,       // write enable
+    
+    input d[BITS],  // write data
+    output q[BITS]  // read data
+  ){
+  
+  dff reg_dff[BITS] (.clk(clk), .rst(rst), #INIT(INIT));
+  
+  always {
+    q = reg_dff.q;       // hook up dff output
+    
+    if (we)              // if write enable on
+      reg_dff.d = d;     // write data to dff
+    
+    else                 // otherwise store back prev value
+      reg_dff.d = reg_dff.q;
+    
+    if (rst) {           // if reset button pressed
+      reg_dff.d = INIT;  // reset register back to init value
+      q = INIT;          // output INIT
+    }
+  }
+}

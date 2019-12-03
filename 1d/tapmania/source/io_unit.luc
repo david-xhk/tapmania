@@ -1,0 +1,79 @@
+module io_unit (
+    input clk,  // clock
+    input rst,  // reset
+    input a[4], // write/read address
+    input wr,   // write/read signal
+    input wd[32],   // write data
+    output rd[32],  // read data
+    
+    input hsec_in,  // hsec detector
+    input button[6],  // button input
+    output led1[32],  // LED array output
+    output led2[2]    // Backlight output
+  ){
+  
+  .clk(clk), .rst(rst) {
+    dff button_dff[6];
+    dff led1_dff[32];
+    dff led2_dff[2];
+    dff timer[16];
+    dff timer_state[2];
+    dff stage_dff[5];
+    dff best_time_dff[16];
+    dff delay[16];
+    dff delay_state[2];
+  }
+  
+  always {
+    led1 = led1_dff.q;
+    led2 = led2_dff.q;
+    
+    // for debugging purposes
+    // led1[18] = stage_dff.q[4];
+    // led1[14] = stage_dff.q[3];
+    // led1[10] = stage_dff.q[2];
+    // led1[6] = stage_dff.q[1];
+    // led1[2] = stage_dff.q[0];
+    
+    if (button)
+      button_dff.d = button;
+    
+    if (hsec_in) {
+      case (timer_state.q) {
+        0: timer.d = 0;
+        1: timer.d = timer.q + 1;
+        2: timer.d = timer.q;
+      }
+      
+      case (delay_state.q) {
+        0: delay.d = 0;
+        1: delay.d = delay.q + 1;
+        2: delay.d = delay.q;
+      }
+    }
+    
+    if (wr) {
+      case (a) {
+        1: led1_dff.d =  wd;
+        3: led2_dff.d = wd;
+        5: timer_state.d = wd;
+        7: stage_dff.d = wd;
+        9: best_time_dff.d = wd;
+        11: delay_state.d = wd;
+      }
+    }
+    
+    case (a) {
+      0:
+        rd = button_dff.q;
+        button_dff.d = button;
+      1: rd = led1_dff.q;
+      3: rd = led2_dff.q;
+      5: rd = timer.q;
+      7: rd = stage_dff.q;
+      9: rd = best_time_dff.q;
+      11: rd = delay.q;
+      default: rd = 0;
+    }
+  }  
+}

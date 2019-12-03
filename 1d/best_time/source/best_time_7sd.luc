@@ -1,0 +1,64 @@
+module best_time_7sd #(
+    DIGITS = 4 : DIGITS > 2,  // number of digits on the 7-segment display
+    MINS = 99 : MINS > 0 && MINS < $pow(10, DIGITS-2)  // max number of minutes
+  )(
+    input clk,                           // clock
+    input rst,                           // reset
+    input we,                            // best time reg write enable
+    input wd[$clog2(6000*(MINS+1)-1)],   // best reg write data
+    
+    output rd[$clog2(6000*(MINS+1)-1)],  // best time reg read data
+    output seg[8],                       // seg bits
+    output sel[4]                        // seg select
+  ){
+  
+  .clk(clk), .rst(rst) {     
+    // register to store the best time (in hsecs)
+    register best_time_reg(#BITS($clog2(6000*(MINS+1)-1)));
+    
+    // temp dff to store hsecs
+    dff temp_dff[$clog2(6000*(MINS+1)-1)](#INIT(6000*(MINS+1)-1));
+    
+    // hsec counter util to count hsecs
+    hsec_counter hsec_ctr(#MINS(MINS));
+    
+    // counter to select which segment to activate
+    // increases every 2^16 = 65536 CLK cycles
+    counter seg_ctr(#DIV(16), #SIZE($clog2(DIGITS)), #TOP(DIGITS-1));
+  }
+  
+  // time_7sd util to display time on 7sd
+  time_7sd time_7sd(#DIGITS(DIGITS), #MINS(MINS));
+  
+  always {
+    rd = best_time_reg.q;    // connect best time reg to read data output
+    best_time_reg.we = we;   // connect write enable input to best time reg
+    best_time_reg.d = wd;    // connect write data input to best time reg
+
+    hsec_ctr.reset = 0;  // set default hsec ctr reset to 0
+    hsec_ctr.tick = 0;   // set default hsec ctr tick to 0
+    
+    if (we) {              // if write enabled
+      hsec_ctr.reset = 1;  // reset hsec ctr
+      temp_dff.d = wd;     // store write data into temp
+    }
+    
+    // when write enabled is off, we start to compute
+    // mins and secs using the hsec counter
+    
+    else if (temp_dff.q) {          // while there are hsecs left in temp
+      temp_dff.d = temp_dff.q - 1;  // decrement temp
+      hsec_ctr.tick = 1;            // tick hsec ctr
+    }
+      
+    // pipe seg ctr and hsec_ctr to time 7sd
+    time_7sd.seg_ctr = seg_ctr.value;
+    time_7sd.hsecs = hsec_ctr.hsecs;
+    time_7sd.secs = hsec_ctr.secs;
+    time_7sd.mins = hsec_ctr.mins;
+    
+    // pipe time 7sd to output
+    sel = time_7sd.sel;
+    seg = time_7sd.seg;
+  }
+}

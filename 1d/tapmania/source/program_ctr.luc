@@ -1,0 +1,22 @@
+module program_ctr (
+    input clk,         // clock
+    input rst,         // reset
+    input pcsel,       // PCSEL
+    input addr[8],     // address to branch to
+    
+    output out[8]      // current PC
+  ){
+  
+  // dff to store program counter
+  dff pc_dff[8] (.clk(clk), .rst(rst), #INIT(0));
+  
+  always {
+    out = pc_dff.q;             // connect program counter to output
+    
+    if (pcsel)
+      pc_dff.d = addr;          // if PCSEL is on, store branch address
+    
+    else
+      pc_dff.d = pc_dff.q + 1;  // otherwise increment PC by 1
+  }
+}

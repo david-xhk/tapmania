@@ -1,0 +1,18 @@
+module boolean (
+    input a[32],    // A input
+    input b[32],    // B input
+    input alufn[6],   // alufn
+    
+    output out[32]  // boolean output
+  ){
+
+  always {
+    case (alufn[3:0]) {
+      b0110: out = a ^ b;        // if ALUFN[3:0] = 0110, do XOR
+      b1000: out = a & b;        // if ALUFN[3:0] = 1000, do AND
+      b1010: out = a;            // if ALUFN[3:0] = 1010, do ASEL
+      b1110: out = a | b;        // if ALUFN[3:0] = 1110, do OR
+      default: out = 32b0;  // set default output to 0
+    }  
+  }
+}

@@ -1,0 +1,43 @@
+module timer_7sd #(
+    DIGITS = 4 : DIGITS > 2,  // number of digits on the 7-segment display
+    MINS = 99 : MINS > 0 && MINS < $pow(10, DIGITS-2)  // max number of minutes
+  )(
+    input clk,      // clock
+    input rst,      // reset
+    input we,       // timer state reg write enable
+    input wd[2],    // timer state reg write data
+    
+    // total hsecs read data
+    output rd[$clog2(6000*(MINS+1)-1)],
+    output seg[8],  // seg bits
+    output sel[4]   // seg select
+  ){
+  
+  .clk(clk), .rst(rst) {
+    // instantiate timer util to track time
+    timer timer(#MINS(MINS));
+    
+    // counter to select which segment to activate
+    // increases every 2^16 = 65536 CLK cycles
+    counter seg_ctr(#DIV(16), #SIZE($clog2(DIGITS)), #TOP(DIGITS-1));
+  }
+  
+  // time_7sd util to display time on 7sd
+  time_7sd time_7sd(#DIGITS(DIGITS), #MINS(MINS));
+  
+  always {
+    rd = timer.total_hsecs;  // connect total hsecs to read data output
+    timer.we = we;           // connect write enable input to timer
+    timer.wd = wd;           // connect write data input to timer
+    
+    // pipe seg ctr and timer to time 7sd
+    time_7sd.seg_ctr = seg_ctr.value;
+    time_7sd.hsecs = timer.hsecs;
+    time_7sd.secs = timer.secs;
+    time_7sd.mins = timer.mins;
+    
+    // pipe time 7sd to output
+    sel = time_7sd.sel;
+    seg = time_7sd.seg;
+  }
+}

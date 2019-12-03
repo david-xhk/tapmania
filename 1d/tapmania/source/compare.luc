@@ -1,0 +1,20 @@
+module compare (
+    input z,          // zero condition of A-B
+    input v,          // overflow condition of A-B
+    input n,          // MSB of A-B
+    input alufn[6],   // alufn
+    
+    output out[32]  // compare unit output
+  ){
+
+  always {
+    out[31:1] = 31b0;  // set all output bits after LSB to 0 
+    
+    case(alufn[2:1]) {
+      b01: out[0] = z;          // if ALUFN[2:1] = 01, do CMPEQ (compare equals to)
+      b10: out[0] = n ^ v;      // if ALUFN[2:1] = 10, do CMPLT (compare less than)
+      b11: out[0] = z | (n^v);  // if ALUFN[2:1] = 11, do CMPLE (compare less than or equals to)
+      default: out[0] = b0;     // set default output to 0
+    }
+  }
+}

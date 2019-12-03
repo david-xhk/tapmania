@@ -1,0 +1,60 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,      // AVR RX buffer full
+    output io_led [3][8],   // LEDs on IO Shield
+    output io_seg [8],      // 7-segment LEDs on IO Shield
+    output io_sel [4],      // Digit select on IO Shield
+    input io_button [5],    // 5 buttons on IO Shield
+    input io_dip [3][8]     // DIP switches on IO Shield
+  ) {
+  
+  sig rst;                  // reset signal
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    
+    // best time 7sd test
+    best_time_7sd best_time_7sd(.rst(rst));
+  }
+  
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+    
+    led = 8h00;             // turn LEDs off
+    spi_miso = bz;          // not using SPI
+    spi_channel = bzzzz;    // not using flags
+    avr_rx = bz;            // not using serial port
+
+    io_led = io_dip;        // echo io_dip
+        
+    best_time_7sd.we = io_dip[2][7];    // set best time 7sd we to switch 23
+    
+    case (io_dip[0]) {                  // set best time 7sd wd to 9 different cases
+      b00000001: best_time_7sd.wd = 6000*2+100*35+27;  // switch 0: 2 min, 35 sec, 27 hsec
+      b00000010: best_time_7sd.wd = 6000*1+100*55+38;  // switch 1: 1 min, 55 sec, 38 hsec
+      b00000100: best_time_7sd.wd = 6000*1+100*47+99;  // switch 2: 1 min, 47 sec, 99 hsec
+      b00001000: best_time_7sd.wd = 6000*1+100*09+05;  // switch 3: 1 min, 09 sec, 05 hsec
+      b00010000: best_time_7sd.wd = 6000*0+100*52+76;  // switch 4: 0 min, 52 sec, 76 hsec
+      b00100000: best_time_7sd.wd = 6000*0+100*45+31;  // switch 5: 0 min, 45 sec, 31 hsec
+      b01000000: best_time_7sd.wd = 6000*0+100*44+14;  // switch 6: 0 min, 44 sec, 14 hsec
+      b10000000: best_time_7sd.wd = 6000*0+100*44+02;  // switch 7: 0 min, 44 sec, 02 hsec
+      default: best_time_7sd.wd = 6000*99+100*59+99;   // default: 99 min, 59 sec, 99 hsec
+    }
+    
+    io_seg = best_time_7sd.seg;         // pipe best time 7sd seg to io_seg
+    io_sel = best_time_7sd.sel;         // pipe best time 7sd sel to io_sel
+  }
+}

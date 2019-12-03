@@ -1,0 +1,47 @@
+module time_7sd #( 
+    DIGITS = 4 : DIGITS > 2,  // number of digits on the 7-segment display
+    MINS = 99 : MINS > 0 && MINS < $pow(10, DIGITS-2)  // max number of minutes
+  )(
+    input hsecs[7],                 // hundredth seconds (hsecs < 100)
+    input secs[6],                  // seconds (secs < 60)
+    input mins[$clog2(MINS)],       // minutes (mins <= MINS)
+    input seg_ctr[$clog2(DIGITS)],  // which seg to select (in binary)
+    
+    output seg[8],                  // seg bits
+    output sel[DIGITS]              // seg select (in one-hot)
+  ){
+
+  // num_7sd util to display numbers on 7sd
+  num_7sd num_7sd(#DIGITS(DIGITS), #LEADING_ZEROS(1));
+  
+  always {
+    // pipe seg ctr through num 7sd to sel output 
+    num_7sd.seg_ctr = seg_ctr;
+    sel = num_7sd.sel;
+    
+    // connect num 7sd seg to 7sd output by default
+    seg = num_7sd.seg;
+    
+    // if 1 minute not reached display ss:hh (seconds:hundredth seconds)
+    if (mins == 0) {
+      num_7sd.num = secs*100+hsecs;
+      
+      // remove leading zero if secs < 10
+      if (seg_ctr == 3 && secs < 10)
+        seg = ~8b0;
+    }
+    
+    // otherwise display mm:ss (minutes:seconds)
+    else {
+      num_7sd.num = mins*100+secs;
+      
+      // remove leading zero if mins < 10
+      if (seg_ctr == 3 && mins < 10)
+        seg = ~8b0;
+    }
+      
+    // switch on the decimal point of the second 7sd
+    if (seg_ctr == 2)
+      seg[7] = ~1;
+  }
+}

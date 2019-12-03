@@ -1,0 +1,73 @@
+module char_to_seg (
+    input char[8],
+    output seg[8]
+  ){
+  
+  always {
+    case (char) {
+      "0": seg = b00111111;
+      "1": seg = b00000110;
+      "2": seg = b01011011;
+      "3": seg = b01001111;
+      "4": seg = b01100110;
+      "5": seg = b01101101;
+      "6": seg = b01111101;
+      "7": seg = b00000111;
+      "8": seg = b01111111;
+      "9": seg = b01100111;
+      "a": seg = b11011100;
+      "A": seg = b01110111;
+      "b": seg = b01111100;
+      "B": seg = b01111100;
+      "c": seg = b01011000;
+      "C": seg = b00111001;
+      "d": seg = b01011110;
+      "D": seg = b01011110;
+      "e": seg = b01111001;
+      "E": seg = b01111001;
+      "f": seg = b01110001;
+      "F": seg = b01110001;
+      "g": seg = b01101111;
+      "G": seg = b01111101;
+      "h": seg = b01110100;
+      "H": seg = b01110110;
+      "i": seg = b00010000;
+      "I": seg = b00110000;
+      "j": seg = b00001100;
+      "J": seg = b00001110;
+      "k": seg = b01111000;
+      "K": seg = b01111000;
+      "l": seg = b00011000;
+      "L": seg = b00111000;
+      "n": seg = b01010100;
+      "N": seg = b00110111;
+      "o": seg = b01011100;
+      "O": seg = b00111111;
+      "p": seg = b01110011;
+      "P": seg = b01110011;
+      "q": seg = b11100111;
+      "Q": seg = b10111111;
+      "r": seg = b01010000;
+      "R": seg = b00110011;
+      "s": seg = b01101101;
+      "S": seg = b01101101;
+      "t": seg = b01110000;
+      "T": seg = b00110001;
+      "u": seg = b10011100;
+      "U": seg = b10111110;
+      "V": seg = b00011100;
+      "V": seg = b00111110;
+      "x": seg = b01110110;
+      "X": seg = b01110110;
+      "y": seg = b01101110;
+      "Y": seg = b01101110;
+      "z": seg = b01011011;
+      "Z": seg = b01011011;
+      " ": seg = b00000000;
+      "-": seg = b01000000;
+      "_": seg = b00001000;
+      ".": seg = b10000000;
+      default: seg = b01111111;      // by default, set all the segments to high to indicate that there was an invalid character being displayed
+    }
+  }
+}

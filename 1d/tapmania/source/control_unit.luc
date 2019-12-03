@@ -1,0 +1,64 @@
+module control_unit (
+    input opcode[6],  // opcode
+    input z,          // zero condition of reg1 value
+    
+    output pcsel,     // progam counter selector
+    output bsel,      // alu B input selector
+    output wdsel[2],  // regfiles write data selector
+    output alufn[6],  // alu function signal
+    output wr,        // IO files read/write signal
+    output werf       // regfiles write enable signal
+  ) {
+
+  always {
+    pcsel = b0;
+    bsel = b0;
+    wdsel = 2b0;
+    alufn = 6b0;
+    wr = b0;
+    werf = b0;
+    
+    // OP/OPC instruction class
+    if (opcode[5:3] != b111) {
+      bsel = opcode[5];
+      werf = b1;
+      
+      case (opcode[4:0]) {
+        b00000: alufn = b000000;  // ADD
+        b00001: alufn = b000001;  // SUB
+        b00100: alufn = b110011;  // CMPEQ
+        b00101: alufn = b110101;  // CMPLT
+        b00110: alufn = b110111;  // CMPLE
+        b01100: alufn = b010110;  // XOR
+        b01110: alufn = b011000;  // AND
+        b10000: alufn = b011010;  // ASEL
+        b10010: alufn = b011110;  // OR
+        b10100: alufn = b100000;  // SHL
+        b10101: alufn = b100001;  // SHR
+        b10110: alufn = b100011;  // SRA
+      }
+    }
+    
+    // Other instructions
+    else {
+      case (opcode[2:0]) {
+        b000:           // LD
+          bsel = b1;
+          wdsel = b10;
+          alufn = b000000;          
+          werf = b1;          
+        b001:           // GET
+          wdsel = b01;
+          werf = b1;
+        b010:           // SET
+          bsel = b1;
+          alufn = b000000;          
+          wr = b1;
+        b101:           // BEQ
+          pcsel = z;
+        b110:           // BNE
+          pcsel = ~z;        
+      }
+    }
+  }
+}

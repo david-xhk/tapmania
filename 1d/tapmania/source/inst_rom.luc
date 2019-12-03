@@ -1,0 +1,109 @@
+module inst_rom (
+    input a[8],  // the address of the requested instruction
+    output d[32]  // the instruction
+  ){
+
+  always {
+    case (a) {
+      // RST
+      0:  d = b111010xxx11101010000000000000000;  // SET(R7, 0, timer_state)
+      1:  d = b111010xxx11100010000000000000000;  // SET(R7, 0, led1)
+      2:  d = b111010xxx11100110000000000000000;  // SET(R7, 0, led2)
+      
+      // IDLE
+      3:  d = b111001000xxx0000xxxxxxxxxxxxxxxx;  // GET(button, R0)
+      4:  d = b111101xxx00000000011xxxxxxxxxxxx;  // BEQ(R0, IDLE)
+      5:  d = b110101000000xxxx0000000000000101;  // SHRC(R0, 5, R0)
+      6:  d = b111101xxx00000000011xxxxxxxxxxxx;  // BEQ(R0, IDLE)
+      7:  d = b111010xxx11101110000000000000001;  // SET(R7, 1, stage)
+      8:  d = b111010xxx11101010000000000000001;  // SET(R7, 1, timer_state)
+      
+      // INIT
+      9:  d = b111010xxx11100010000000000000000;  // SET(R7, 0, led1)
+      10: d = b111001000xxx0111xxxxxxxxxxxxxxxx;  // GET(stage, R0)
+      11: d = b111000001111xxxxxxxxxxxx00000001;  // LD(R7, MaxStage, R1)
+      12: d = b000101010001000xxxxxxxxxxxxxxxxx;  // CMPLT(R1, R0, R2)
+      13: d = b111110xxx01000111100xxxxxxxxxxxx;  // BNE(R2, END)
+      14: d = b111000110000xxxxxxxxxxxx01111111;  // LD(R0, StageOffset, R6)
+      15: d = b100000000000xxxx0000000000000001;  // ADDC(R0, 1, R0)
+      16: d = b111010xxx00001110000000000000000;  // SET(R0, 0, stage)
+      17: d = b100000101111xxxx1111111111111100;  // ADDC(R7, -4, R5)
+      
+      // LOAD
+      18: d = b100000101101xxxx0000000000000100;  // ADDC(R5, 4, R5) 
+      19: d = b100101000101xxxx0000000000100000;  // CMPLTC(R5, 32, R0)
+      20: d = b111101xxx00000110010xxxxxxxxxxxx;  // BEQ(R0, PASS)
+      21: d = b010100000110101xxxxxxxxxxxxxxxxx;  // SHL(R6, R5, R0)
+      22: d = b111101xxx00000110010xxxxxxxxxxxx;  // BEQ(R0, PASS)
+      23: d = b110101100000xxxx0000000000011100;  // SHRC(R0, 28, R4)
+      24: d = b111101xxx10000010010xxxxxxxxxxxx;  // BEQ(R4, LOAD)
+      25: d = b010101000000101xxxxxxxxxxxxxxxxx;  // SHR(R0, R5, R0)
+      26: d = b111010xxx00000010000000000000000;  // SET(R0, 0, led1)
+      27: d = b111000001111xxxxxxxxxxxx00000010;  // LD(R7, MaxTime, R1)
+      
+      // RDY
+      28: d = b111001000xxx0101xxxxxxxxxxxxxxxx;  // GET(timer, R0)
+      29: d = b000101010000001xxxxxxxxxxxxxxxxx;  // CMPLT(R0, R1, R2)
+      30: d = b111101xxx01000111100xxxxxxxxxxxx;  // BEQ(R2, END)
+      31: d = b111001011xxx0000xxxxxxxxxxxxxxxx;  // GET(button, R3)
+      32: d = b111101xxx01100011100xxxxxxxxxxxx;  // BEQ(R3, RDY)
+      33: d = b100101010011xxxx0000000000010000;  // CMPLTC(R3, 16, R2)
+      34: d = b111110xxx01000100110xxxxxxxxxxxx;  // BNE(R2, CHK)
+      35: d = b101110000011xxxx0000000000010000;  // ANDC(R3, 16, R0)
+      36: d = b111110xxx00000000000xxxxxxxxxxxx;  // BNE(R0, RST)
+      37: d = b111101xxx00000011100xxxxxxxxxxxx;  // BEQ(R7, RDY)
+      
+      // CHK
+      38: d = b001110010011100xxxxxxxxxxxxxxxxx;  // AND(R3, R4, R2)
+      39: d = b111110xxx01000010010xxxxxxxxxxxx;  // BNE(R2, LOAD)
+      
+      // FAIL
+      40: d = b111010xxx11110110000000000000001;  // SET(R7, 1, delay_state)
+      41: d = b111010xxx11100110000000000000010;  // SET(R7, 2, led2)
+      42: d = b111000001111xxxxxxxxxxxx00000011;  // LD(R7, FailDelay, R1)
+      
+      // FAIL2
+      43: d = b111001000xxx1011xxxxxxxxxxxxxxxx;  // GET(delay, R0)
+      44: d = b000101010000001xxxxxxxxxxxxxxxxx;  // CMPLT(R0, R1, R2)
+      45: d = b111110xxx01000101011xxxxxxxxxxxx;  // BNE(R2, FAIL2)
+      46: d = b111010xxx11110110000000000000000;  // SET(R7, 0, delay_state)
+      47: d = b111010xxx11100110000000000000000;  // SET(R7, 0, led2)
+      48: d = b111000001111xxxxxxxxxxxx00000010;  // LD(R7, MaxTime, R1)
+      49: d = b111101xxx11100011100xxxxxxxxxxxx;  // BEQ(R7, RDY)
+      
+      // PASS
+      50: d = b111010xxx11110110000000000000001;  // SET(R7, 1, delay_state)
+      51: d = b111010xxx11100010000000000000000;  // SET(R7, 0, led1)
+      52: d = b111010xxx11100110000000000000001;  // SET(R7, 1, led2)
+      53: d = b111000001111xxxxxxxxxxxx00000100;  // LD(R7, PassDelay, R1)
+      
+      // PASS2
+      54: d = b111001000xxx1011xxxxxxxxxxxxxxxx;  // GET(delay, R0)
+      55: d = b000101010000001xxxxxxxxxxxxxxxxx;  // CMPLT(R0, R1, R2)
+      56: d = b111110xxx01000110110xxxxxxxxxxxx;  // BNE(R2, PASS2)
+      57: d = b111010xxx11110110000000000000000;  // SET(R7, 0, delay_state)
+      58: d = b111010xxx11100110000000000000000;  // SET(R7, 0, led2)
+      59: d = b111101xxx11100001001xxxxxxxxxxxx;  // BEQ(R7, INIT)
+      
+      // END
+      60: d = b111010xxx11101010000000000000010;  // SET(R7, 2, timer_state)
+      61: d = b111001000xxx0101xxxxxxxxxxxxxxxx;  // GET(timer, R0)
+      62: d = b111001001xxx1001xxxxxxxxxxxxxxxx;  // GET(best_time, R1)
+      63: d = b000101010000001xxxxxxxxxxxxxxxxx;  // CMPLT(R0, R1, R2)
+      64: d = b111101xxx01001000010xxxxxxxxxxxx;  // BEQ(R2, HOLD)
+      65: d = b111010xxx00010010000000000000000;  // SET(R0, 0, best_time)
+      
+      // HOLD
+      66: d = b111010xxx11110110000000000000001;  // SET(R7, 1, delay_state)
+      67: d = b111000001111xxxxxxxxxxxx00000101;  // LD(R7, HoldDelay, R1)
+      
+      // HOLD2
+      68: d = b111001000xxx1011xxxxxxxxxxxxxxxx;  // GET(delay, R0)
+      69: d = b000101010000001xxxxxxxxxxxxxxxxx;  // CMPLT(R0, R1, R2)
+      70: d = b111110xxx01001000100xxxxxxxxxxxx;  // BNE(R2, HOLD2)
+      71: d = b111010xxx11110110000000000000000;  // SET(R7, 0, delay_state)
+      72: d = b111101xxx11100000000xxxxxxxxxxxx;  // BEQ(R7, RST)
+      default: d = 0;
+    }
+  }
+}

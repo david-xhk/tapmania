@@ -1,0 +1,27 @@
+module regfile (
+    input clk,                // clock
+    input rst,                // reset
+    input ra1[3],             // read address 1
+    input ra2[3],             // read address 2
+    input wa[3],              // write address
+    input wd[32],             // write data
+    input we,                 // write enable
+    
+    output rd1[32],           // read data 1
+    output rd2[32],           // read data 2
+    
+    output r4[32] // for debugging purposes
+  ){
+  dff regs[8][32] (.clk(clk), .rst(rst));
+  
+  always {
+    if (we)
+      regs.d[wa] = wd;
+    rd1 = regs.q[ra1];           // output reg1 data
+    rd2 = regs.q[ra2];           // output reg2 data
+    
+    // for debugging purposes
+    r4 = regs.q[4];
+  }
+}
+

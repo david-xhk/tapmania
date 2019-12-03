@@ -1,0 +1,17 @@
+module shifter (
+    input a[32],    // A input
+    input b[32],    // B input
+    input alufn[6],   // alufn
+    output out[32]  // shifter output
+  ){
+
+  always {
+    case (alufn[1:0]) {
+      b00: out = a << b[4:0];            // if ALUFN[1:0] = 00, do SHL (shift left)
+      b01: out = a >> b[4:0];            // if ALUFN[1:0] = 01, do SHR (shift right)
+      b11: out = $signed(a) >>> b[4:0];  // if ALUFN[1:0] = 11, do SRA (shift right arithmetic)
+      default: out = a;                 // set default output to a
+    }
+  }
+}
+

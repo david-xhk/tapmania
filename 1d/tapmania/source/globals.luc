@@ -1,0 +1,146 @@
+global Alufn {
+  const ADD   = b000000;
+  const SUB   = b000001;
+  const MUL   = b000010;
+  const DIV   = b000011;
+  const CMPEQ = b110011;
+  const CMPLT = b110101;
+  const CMPLE = b110111;
+  const FALSE = b010000;
+  const NOR   = b010001;
+  const NBSEL = b010011;
+  const NASEL = b010101;
+  const XOR   = b010110;
+  const NAND  = b010111;
+  const AND   = b011000;
+  const XNOR  = b011001;
+  const ASEL  = b011010;
+  const BSEL  = b011100;
+  const OR    = b011110;
+  const TRUE  = b011111;
+  const SHL   = b100000;
+  const SHR   = b100001;
+  const SRA   = b100011;
+}
+
+global Inst {
+  // OP instruction class
+  const ADD   = b000000;
+  const SUB   = b000001;
+  const MUL   = b000010;
+  const DIV   = b000011;
+  const CMPEQ = b000100;
+  const CMPLT = b000101;
+  const CMPLE = b000110;
+  const FALSE = b001000;
+  const NOR   = b001001;
+  const NBSEL = b001010;
+  const NASEL = b001011;
+  const XOR   = b001100;
+  const NAND  = b001101;
+  const AND   = b001110;
+  const XNOR  = b001111;
+  const ASEL  = b010000;
+  const BSEL  = b010001;
+  const OR    = b010010;
+  const TRUE  = b010011;
+  const SHL   = b010100;
+  const SHR   = b010101;
+  const SRA   = b010110;
+  
+  // OPC instruction class
+  const ADDC   = b100000;
+  const SUBC   = b100001;
+  const MULC   = b100010;
+  const DIVC   = b100011;
+  const CMPEQC = b100100;
+  const CMPLTC = b100101;
+  const CMPLEC = b100110;
+  const NORC   = b101001;
+  const NBSELC = b101010;
+  const XORC   = b101100;
+  const NANDC  = b101101;
+  const ANDC   = b101110;
+  const XNORC  = b101111;
+  const BSELC  = b110001;  
+  const ORC    = b110010;
+  const SHLC   = b110100;
+  const SHRC   = b110101;
+  const SRAC   = b110110;
+  
+  // Other instructions
+  const LD  = b111000;
+  const GET = b111001;
+  const SET = b111010xxx;
+  const BEQ = b111101xxx;
+  const BNE = b111110xxx;
+  const NOP = b111111;
+}
+
+global Macro {
+  const GET0 = c{b111001, 3d0, 3bx};
+  const SETC = c{b111010xxx, 3d7};
+  const BR   = c{b111110xxx, 3d7};
+}
+
+global State {
+  const RST   = 8d0;
+  const IDLE  = 8d3;
+  const INIT  = 8d9;
+  const LOAD  = 8d18;
+  const RDY   = 8d27;
+  const CHK   = 8d37;
+  const CHK2  = 8d39;
+  const FAIL  = 8d45;
+  const FAIL2 = 8d48;
+  const PASS  = 8d54;
+  const PASS2 = 8d57;
+  const END   = 8d63;
+  const HOLD  = 8d69;
+  const HOLD2 = 8d71;
+}
+
+global Mem {
+  const MAX_STAGE    = c{12bx, 8d1};
+  const MAX_TIME     = c{12bx, 8d2};
+  const CHECK_DELAY  = c{12bx, 8d3};
+  const FAIL_DELAY   = c{12bx, 8d4};
+  const PASS_DELAY   = c{12bx, 8d5};
+  const HOLD_DELAY   = c{12bx, 8d6};
+  const STAGE_OFFSET = c{12bx, 8d127};
+}
+
+global Regs {
+  const R0     = 3d0;
+  const R1     = 3d1;
+  const R2     = 3d2;
+  const INPUT  = 3d3;
+  const NEXT   = 3d4;
+  const OFFSET = 3d5;
+  const ANS    = 3d6;
+  const R7     = 3d7;
+}
+
+global Io {
+  const BUTTON     = 4d0;
+  const LED1       = 4d1;
+  const LED1_STATE = 4d2;
+  const LED2       = 4d3;
+  const LED2_STATE = 4d4;
+  const TIMER      = 4d5;
+  const SEG1_STATE = 4d6;
+  const STAGE      = 4d7;
+  const SEG2_STATE = 4d8;
+  const BEST_TIME  = 4d9;
+  const SEG3_STATE = 4d10;
+  const DELAY      = 4d11;
+}
+
+global Color {
+  // Colours
+  const GRAY   = b0000;
+  const RED    = b1000;
+  const GREEN  = b0100;
+  const BLUE   = b0010;
+  const YELLOW = b0001;
+}

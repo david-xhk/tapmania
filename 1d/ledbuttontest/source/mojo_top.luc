@@ -1,0 +1,59 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,      // AVR RX buffer full
+    
+    input button[6],         // Buttons
+    output led1[32],        // LED array
+    output led2[2]          // Backlight
+  ) {
+  
+  sig rst;                  // reset signal
+  
+  sig led1_out[32];
+  sig led2_out[2];
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    
+  }
+  
+  always {
+    reset_cond.in = ~rst_n;   // input raw inverted reset signal
+    rst = reset_cond.out;     // conditioned reset
+    
+    spi_miso = bz;            // not using SPI
+    spi_channel = bzzzz;      // not using flags
+    avr_rx = bz;              // not using serial port
+    led = 8b0;                // not using mojo leds
+    
+    led1_out = 32b0;
+    if (button[3])
+      led1_out = led1_out + b10001000100010001000100010001000;
+    if (button[2])
+      led1_out = led1_out + b01000100010001000100010001000100;
+    if (button[1])
+      led1_out = led1_out + b00100010001000100010001000100010;
+    if (button[0])
+      led1_out = led1_out + b00010001000100010001000100010001;
+    led1 = led1_out;
+    
+    led2_out = 2b0;
+    if (button[5])
+      led2_out = led2_out + b10;
+    if (button[4])
+      led2_out = led2_out + b01;
+    led2 = led2_out;
+  }
+}

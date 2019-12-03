@@ -1,0 +1,46 @@
+module alu (
+    input a[32],    // a input
+    input b[32],    // b input
+    input alufn[6],   // alufn
+    
+    output z,         // zero condition
+    output v,         // overflow condition
+    output n,         // MSB of output
+    output out[32]  // output from ALU
+  ){
+  
+  adder adder;      // initialising adder unit  
+  boolean boolean;  // initialising boolean unit
+  compare compare;  // initialising compare unit
+  shifter shifter;  // initialising shifter unit
+  
+  always {
+    z = adder.z;              // assigning adder inputs and outputs
+    v = adder.v;
+    n = adder.n;
+    adder.a = a;
+    adder.b = b;
+    adder.alufn = alufn;
+    
+    boolean.a = a;            // assigning boolean inputs
+    boolean.b = b;
+    boolean.alufn = alufn;
+    
+    shifter.a = a;            // assigning shifter inputs
+    shifter.b = b;
+    shifter.alufn = alufn;
+
+    compare.z = adder.z;      // assigning compare inputs
+    compare.v = adder.v;
+    compare.n = adder.n;
+    compare.alufn = alufn;
+    
+    case(alufn[5:4]) {
+      b00: out = adder.out;     // if ALUFN[5:4] = 00, select adder output
+      b01: out = boolean.out;   // if ALUFN[5:4] = 01, select boolean output
+      b10: out = shifter.out;   // if ALUFN[5:4] = 10, select shifter output
+      b11: out = compare.out;   // if ALUFN[5:4] = 11, select compare output
+      default: out = 32b0;  // set default output to 0
+    }
+  }
+}
